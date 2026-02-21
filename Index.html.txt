@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>StreamNova2 - Accueil</title>
+<style>
+body {margin:0;font-family:Arial,sans-serif;background:black;color:white;}
+header {display:flex;justify-content:space-between;align-items:center;padding:20px;background:#111;}
+.logo img {width:150px;cursor:pointer;}
+nav a {margin-left:20px;text-decoration:none;color:white;font-size:18px;}
+nav a:hover {color:#9f50e4;}
+#loginBtn {margin-left:20px;padding:8px 15px;background:#9f50e4;border:none;color:white;border-radius:5px;cursor:pointer;font-size:16px;}
+#loginBtn:hover {background:#7d3ac7;}
+.slider {position:relative;width:100%;height:500px;overflow:hidden;}
+.slide {position:absolute;width:100%;height:500px;background-size:cover;background-position:center;opacity:0;transition:opacity 1s ease-in-out;}
+.slide.active {opacity:1;}
+.section {padding:40px;text-align:center;}
+.cards {display:flex;gap:20px;overflow-x:auto;justify-content:center;}
+.cards::-webkit-scrollbar {display:none;}
+.card {min-width:200px;height:300px;background-size:cover;background-position:center;border-radius:10px;transition:transform 0.3s;cursor:pointer;}
+.card:hover {transform:scale(1.1);}
+footer {background:#111;padding:20px;text-align:center;margin-top:40px;}
+.modal {display:none;position:fixed;z-index:1000;left:0;top:0;width:100%;height:100%;overflow:auto;background-color:rgba(0,0,0,0.8);}
+.modal-content {background:#1c1c1c;margin:10% auto;padding:30px;border-radius:10px;width:350px;color:white;position:relative;}
+.modal-content input {width:100%;padding:12px;margin:10px 0;border-radius:5px;border:none;}
+.modal-content button {width:100%;padding:12px;margin-top:10px;background:#9f50e4;border:none;border-radius:5px;color:white;font-size:16px;cursor:pointer;}
+.modal-content button:hover {background:#7d3ac7;}
+.close {position:absolute;right:15px;top:10px;font-size:24px;font-weight:bold;cursor:pointer;color:white;}
+#toggleForm {margin-top:15px;background:none;border:none;color:#9f50e4;cursor:pointer;}
+</style>
+</head>
+<body>
+
+<header>
+<div class="logo"><img src="images/logo.png" id="logo"></div>
+<nav>
+<a href="index.html" class="active">Accueil</a>
+<a href="film.html" id="filmLink">Films</a>
+<a href="series.html" id="seriesLink">Séries</a>
+<a href="recherche.html" id="searchLink">Recherche</a>
+<button id="loginBtn">Connexion / Inscription</button>
+</nav>
+</header>
+
+<div class="slider">
+<div class="slide active" style="background-image:url('images/avatar.jpg');"></div>
+<div class="slide" style="background-image:url('images/dune2.jpg');"></div>
+<div class="slide" style="background-image:url('images/oppenheimer.jpg');"></div>
+</div>
+
+<div class="section">
+<h2>Films Populaires</h2>
+<div class="cards">
+<div class="card" style="background-image:url('images/avatar.jpg');" onclick="window.location.href='avatar.html'"></div>
+<div class="card" style="background-image:url('images/oppenheimer.jpg');" onclick="window.location.href='oppenheimer.html'"></div>
+<div class="card" style="background-image:url('images/dune2.jpg');" onclick="window.location.href='dune.html'"></div>
+</div>
+</div>
+
+<div class="section">
+<h2>Séries Populaires</h2>
+<div class="cards">
+<div class="card" style="background-image:url('images/wednesday.jpg');" onclick="window.location.href='wednesday.html'"></div>
+<div class="card" style="background-image:url('images/lastofus.jpg');" onclick="window.location.href='lastofus.html'"></div>
+</div>
+</div>
+
+<footer>
+<p>© 2026 StreamNova2</p>
+</footer>
+
+<!-- MODAL CONNEXION / INSCRIPTION -->
+<div id="loginModal" class="modal">
+<div class="modal-content">
+<span class="close" id="closeModal">&times;</span>
+<h2 id="formTitle">Connexion</h2>
+<input type="email" id="email" placeholder="Email">
+<input type="password" id="password" placeholder="Mot de passe">
+<button id="submitBtn">Se connecter</button>
+<button id="toggleForm">Créer un compte gratuitement</button>
+</div>
+</div>
+
+<script>
+// Hash mot de passe
+async function hashPassword(password){
+    const encoder = new TextEncoder();
+    const data = encoder.encode(password);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+// Slider
+let slides=document.querySelectorAll(".slide"),index=0;
+function showSlide(){slides.forEach(s=>s.classList.remove("active"));index++;if(index>=slides.length)index=0;slides[index].classList.add("active");}
+setInterval(showSlide,4000);
+
+// Modal connexion
+const loginBtn=document.getElementById("loginBtn");
+const loginModal=document.getElementById("loginModal");
+const closeModal=document.getElementById("closeModal");
+const toggleForm=document.getElementById("toggleForm");
+const formTitle=document.getElementById("formTitle");
+const submitBtn=document.getElementById("submitBtn");
+let isSignup=false;
+
+loginBtn.onclick=()=>loginModal.style.display="block";
+closeModal.onclick=()=>loginModal.style.display="none";
+window.onclick=e=>{if(e.target==loginModal)loginModal.style.display="none";}
+toggleForm.onclick=()=>{isSignup=!isSignup;formTitle.textContent=isSignup?"Inscription":"Connexion";submitBtn.textContent=isSignup?"S'inscrire":"Se connecter";toggleForm.textContent=isSignup?"Déjà inscrit ? Connectez-vous":"Créer un compte gratuitement";};
+
+// Stockage utilisateurs hachés
+let users=JSON.parse(localStorage.getItem("users")||"[]");
+
+submitBtn.onclick=async()=>{
+    const email=document.getElementById("email").value.trim();
+    const password=document.getElementById("password").value.trim();
+    if(!email||!password){alert("Remplissez tous les champs");return;}
+    const hashed=await hashPassword(password);
+
+    if(isSignup){
+        if(users.some(u=>u.email===email)){alert("Email déjà utilisé !");return;}
+        users.push({email,password:hashed});
+        localStorage.setItem("users",JSON.stringify(users));
+        alert("Inscription réussie ! Connectez-vous maintenant.");
+        isSignup=false;formTitle.textContent="Connexion";submitBtn.textContent="Se connecter";toggleForm.textContent="Créer un compte gratuitement";
+    }else{
+        const user=users.find(u=>u.email===email&&u.password===hashed);
+        if(user){
+            alert("Connexion réussie ! Bienvenue "+email);
+            localStorage.setItem("loggedInUser",email);
+            loginModal.style.display="none";
+        }else alert("Email ou mot de passe incorrect !");
+    }
+};
+
+// Vérification accès aux autres pages
+["filmLink","seriesLink","searchLink"].forEach(id=>{
+    document.getElementById(id).onclick=e=>{
+        if(!localStorage.getItem("loggedInUser")){e.preventDefault();alert("Vous devez être connecté pour accéder à cette page !");}
+    }
+});
+
+// Logo retour accueil
+document.getElementById("logo").onclick = () => window.location.href = "index.html";
+</script>
+
+</body>
+</html>
